@@ -1,31 +1,3 @@
-```js
-/* ===========================================================================
- * server.js PARA O REPOSITÓRIO mh3335484-stack/video-render-server (Render Free)
- * ---------------------------------------------------------------------------
- * Copie este arquivo para o server.js do repositório (mesmo package.json e
- * Dockerfile — só precisa de "express").
- *
- * Mantém o MESMO contrato HTTP com o Base44:
- *   POST /render        (Bearer)  -> { render_id, status: "processing", progress }
- *   GET  /render/:id    (Bearer)  -> { render_id, status: processing|completed|error, progress, render_url, error }
- *   GET  /health
- *
- * Correções em relação à versão anterior:
- *  1. O processo caía (502 e depois 404 "Render não encontrado") durante o render:
- *     o arquivo inteiro era carregado em memória (arrayBuffer) a CADA cena e o
- *     ffmpeg rodava com todas as threads/CPU no plano Free (512 MB). Agora:
- *     download em streaming para disco (1x por URL), ffmpeg com 1 thread e
- *     prioridade baixa (nice), e UM render por vez (fila).
- *  2. Validação no POST: toda cena precisa de asset_url http(s) -> 400 com as
- *     cenas problemáticas (antes virava erro assíncrono).
- *  3. Imagens agora viram clipe de verdade (-loop 1); antes o ffprobe classificava
- *     imagem como "video" e gerava 1 frame.
- *  4. O áudio original do vídeo é preservado (antes "-an" removia a fala);
- *     cenas sem áudio recebem trilha silenciosa para o concat funcionar.
- *  5. Suporte a resolution {width,height} (contrato do Base44) e ao formato 4:5.
- *  6. Erros do ffmpeg retornam só o final do stderr (legível) e exceções
- *     globais são registradas em vez de derrubar o processo em silêncio.
- * =========================================================================== */
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
